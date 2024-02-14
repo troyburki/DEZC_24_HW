@@ -1,5 +1,49 @@
 ## Module 3 Homework
 
+<b>SQL commands used</b>
+
+```
+-- create external table from gs bucket (parquet)
+
+CREATE OR REPLACE EXTERNAL TABLE `green_taxi_data.2022_green_external`
+OPTIONS (
+  format = 'Parquet',
+  uris = ['gs://mage-zoomcamp-troy/green_taxi/*.parquet']
+);
+
+-- row count
+SELECT count(*) FROM `green_taxi_data.2022_green_external`;
+
+--unique PU Locations (external table - 0 MB to process )
+SELECT COUNT(DISTINCT(PULocationID)) FROM `green_taxi_data.green_taxi_2022`
+
+-- create non-partioned table from external table
+CREATE OR REPLACE TABLE green_taxi_data.green_taxi_non_partitioned AS
+SELECT * FROM green_taxi_data.2022_green_external;
+
+-- count unique PU Locations materialized table (6.41 MB)
+SELECT COUNT(DISTINCT(PULocationID)) FROM imposing-avatar-408001.green_taxi_data.green_taxi_non_partitioned;
+
+
+SELECT COUNT(*) FROM green_taxi_data.2022_green_external WHERE `fare_amount` = 0;
+
+-- create partitioned and clustered table
+CREATE OR REPLACE TABLE green_taxi_data.green_taxi_2022_partitioned_clustered
+PARTITION BY DATE(lpep_pickup_datetime)
+CLUSTER BY `PULocationID` AS
+SELECT * FROM green_taxi_data.2022_green_external;
+
+SELECT DISTINCT(PULocationID) from `green_taxi_data.green_taxi_2022_partitioned_clustered` 
+WHERE lpep_pickup_datetime >= '2022-06-01 00:00:00' 
+AND lpep_pickup_datetime <= '2022-06-30 23:59:59';
+
+SELECT DISTINCT(PULocationID) from `green_taxi_data.green_taxi_non_partitioned` 
+WHERE lpep_pickup_datetime >= '2022-06-01 00:00:00' 
+AND lpep_pickup_datetime <= '2022-06-30 23:59:59';
+
+SELECT count(*) FROM `green_taxi_data.green_taxi_non_partitioned`;
+
+```
 
 <b>SETUP:</b></br>
 Create an external table using the Green Taxi Trip Records Data for 2022. </br>
